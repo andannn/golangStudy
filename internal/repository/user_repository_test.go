@@ -1,4 +1,4 @@
-package repository_impl
+package repository
 
 import (
 	"context"
@@ -17,7 +17,7 @@ func setupTest(t *testing.T) (*repositoryContext, func()) {
 		ctx:    ctx,
 	}
 	return repo, func() {
-		client.Close()
+		_ = client.Close()
 	}
 }
 

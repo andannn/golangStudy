@@ -1,16 +1,19 @@
-package database
+package main
 
 import (
+	"example.com/internal/api"
 	"example.com/internal/infra/database/ent"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-func NewDatabaseClient() *ent.Client {
+func main() {
 	client, err := ent.Open("mysql", "root:poi@tcp(localhost:3306)/db_ent_demo?parseTime=True")
 	if err != nil {
 		log.Fatalf("failed opening connection to mysql: %v", err)
 	}
+
 	defer func(client *ent.Client) {
 		err := client.Close()
 		if err != nil {
@@ -18,5 +21,6 @@ func NewDatabaseClient() *ent.Client {
 		}
 	}(client)
 
-	return client
+	server := api.NewServer(client)
+	server.Run()
 }

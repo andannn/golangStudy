@@ -1,4 +1,4 @@
-package repository_impl
+package repository
 
 import (
 	"example.com/internal/infra/database/ent"
@@ -6,6 +6,13 @@ import (
 	"fmt"
 	"log"
 )
+
+type UserRepository interface {
+	GetUserById(id int) (*ent.User, error)
+	DeleteUserById(id int) error
+	UpsertUser(user ent.User) (*ent.User, error)
+	GetAllUsers() ([]*ent.User, error)
+}
 
 func (r *repositoryContext) GetAllUsers() ([]*ent.User, error) {
 	users, err := r.client.User.
