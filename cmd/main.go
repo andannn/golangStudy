@@ -21,6 +21,6 @@ func main() {
 		}
 	}(client)
 
-	server := api.NewServer(client)
+	server := api.NewApp(client)
 	server.Run()
 }

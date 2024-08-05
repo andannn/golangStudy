@@ -1,20 +1,31 @@
 package repository
 
 import (
+	"context"
 	"example.com/internal/infra/database/ent"
 	"example.com/internal/infra/database/ent/user"
+	"example.com/internal/repository/model"
 	"fmt"
 	"log"
 )
 
+type userRepository struct {
+	client *ent.Client
+	ctx    context.Context
+}
+
+func NewUserRepository(client *ent.Client, ctx context.Context) UserRepository {
+	return &userRepository{client: client, ctx: ctx}
+}
+
 type UserRepository interface {
 	GetUserById(id int) (*ent.User, error)
 	DeleteUserById(id int) error
-	UpsertUser(user ent.User) (*ent.User, error)
+	CreateUser(user model.UserInsertData) (*ent.User, error)
 	GetAllUsers() ([]*ent.User, error)
 }
 
-func (r *repositoryContext) GetAllUsers() ([]*ent.User, error) {
+func (r *userRepository) GetAllUsers() ([]*ent.User, error) {
 	users, err := r.client.User.
 		Query().
 		All(r.ctx)
@@ -25,7 +36,7 @@ func (r *repositoryContext) GetAllUsers() ([]*ent.User, error) {
 	return users, nil
 }
 
-func (r *repositoryContext) GetUserById(id int) (*ent.User, error) {
+func (r *userRepository) GetUserById(id int) (*ent.User, error) {
 	u, err := r.client.User.
 		Query().
 		Where(user.ID(id)).
@@ -39,7 +50,7 @@ func (r *repositoryContext) GetUserById(id int) (*ent.User, error) {
 	return u, nil
 }
 
-func (r *repositoryContext) DeleteUserById(id int) error {
+func (r *userRepository) DeleteUserById(id int) error {
 	err := r.client.User.
 		DeleteOneID(id).
 		Exec(r.ctx)
@@ -50,15 +61,15 @@ func (r *repositoryContext) DeleteUserById(id int) error {
 	return nil
 }
 
-func (r *repositoryContext) UpsertUser(user ent.User) (*ent.User, error) {
+func (r *userRepository) CreateUser(user model.UserInsertData) (*ent.User, error) {
 	newUser, err := r.client.User.
 		Create().
 		SetName(user.Name).
 		SetAge(user.Age).
+		SetEmail(user.Email).
 		Save(r.ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed upserting user: %w", err)
 	}
-	log.Println("user upserted: ", user)
 	return newUser, nil
 }

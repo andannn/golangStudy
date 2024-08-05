@@ -1,20 +1,33 @@
 package handler
 
 import (
+	"example.com/internal/proto/payload"
+	"example.com/internal/service"
 	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
 	"strconv"
 )
 
-type UserHandler interface {
-	GetUser(context echo.Context) error
+type userHandler struct {
+	service service.UserService
 }
 
-func (h *handlerContext) GetUser(e echo.Context) error {
-	id, err := strconv.Atoi(e.Param("id"))
+func NewUserHandler(service service.UserService) UserHandler {
+	return &userHandler{service: service}
+}
+
+type UserHandler interface {
+	GetUser(context echo.Context) error
+	Register(context echo.Context) error
+}
+
+func (h *userHandler) GetUser(e echo.Context) error {
+	idString := e.Param("id")
+	id, err := strconv.Atoi(idString)
 	if err != nil {
-		return e.JSON(http.StatusBadRequest, "Invalid id")
+		log.Printf("failed to convert id to int: %v", err)
+		return e.JSON(http.StatusBadRequest, "Invalid id ")
 	}
 
 	user, err := h.service.GetUserById(id)
@@ -23,5 +36,14 @@ func (h *handlerContext) GetUser(e echo.Context) error {
 		return e.JSON(http.StatusInternalServerError, "Failed to get user!")
 	}
 
-	return e.JSON(200, user)
+	return e.JSON(http.StatusOK, user)
+}
+
+func (h *userHandler) Register(e echo.Context) error {
+	u := new(payload.UserRegisterPayload)
+	err := e.Bind(u)
+	if err != nil {
+		return err
+	}
+	return e.JSON(http.StatusOK, "Register")
 }

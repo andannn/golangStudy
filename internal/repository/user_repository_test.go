@@ -2,17 +2,17 @@ package repository
 
 import (
 	"context"
-	_ "github.com/mattn/go-sqlite3"
-
-	"example.com/internal/infra/database/ent"
 	"example.com/internal/infra/database/ent/enttest"
+	"example.com/internal/repository/model"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func setupTest(t *testing.T) (*repositoryContext, func()) {
+func setupTest(t *testing.T) (*userRepository, func()) {
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
 	ctx := context.Background()
-	repo := &repositoryContext{
+	repo := &userRepository{
 		client: client,
 		ctx:    ctx,
 	}
@@ -21,49 +21,16 @@ func setupTest(t *testing.T) (*repositoryContext, func()) {
 	}
 }
 
-func TestRepositoryContext_UpsertUser(t *testing.T) {
-	repo, teardown := setupTest(t)
-	defer teardown()
+func TestUserRepository(t *testing.T) {
+	t.Run("CreateUser", func(t *testing.T) {
+		repo, teardown := setupTest(t)
+		defer teardown()
 
-	if newUser, err := repo.UpsertUser(ent.User{Name: "John Doe", Age: 30}); err != nil || newUser.Name != "John Doe" || newUser.Age != 30 {
-		t.Fatalf("failed upserting user: %v", err)
-	} else {
-		t.Logf("pass user upserted: %v", newUser)
-	}
-}
-
-func TestRepositoryContext_UpsertUser_WithSameID(t *testing.T) {
-	repo, teardown := setupTest(t)
-	defer teardown()
-	repo.UpsertUser(ent.User{ID: 1, Name: "John Doe", Age: 30})
-
-	if newUser, err := repo.UpsertUser(ent.User{ID: 1, Name: "Anda Bool", Age: 20}); err != nil {
-		t.Fatalf("failed upserting user: %v", err)
-	} else {
-		t.Logf("pass user upserted: %v", newUser)
-	}
-}
-
-func TestRepositoryContext_GetUserById(t *testing.T) {
-	repo, teardown := setupTest(t)
-	defer teardown()
-	repo.UpsertUser(ent.User{ID: 1, Name: "John Doe", Age: 30})
-
-	if user, err := repo.GetUserById(1); err != nil || user.Name != "John Doe" || user.Age != 30 {
-		t.Fatalf("failed getting user by id: %v", err)
-	} else {
-		t.Logf("pass user returned: %v", user)
-	}
-}
-
-func TestRepositoryContext_GetUser_NotFound(t *testing.T) {
-	repo, teardown := setupTest(t)
-	defer teardown()
-	repo.UpsertUser(ent.User{ID: 2, Name: "John Doe", Age: 30})
-
-	if user, err := repo.GetUserById(1); err != nil {
-		t.Logf("pass user not found: %v %v", err, user)
-	} else {
-		t.Fatalf("failed: %v %v", err, user)
-	}
+		newUser, err := repo.CreateUser(model.UserInsertData{Name: "John Doe", Age: 30, Email: "a21"})
+		if assert.NoError(t, err) {
+			assert.Equal(t, newUser.Name, "John Doe")
+			assert.Equal(t, newUser.Age, 30)
+			assert.Equal(t, newUser.Email, "a21")
+		}
+	})
 }
